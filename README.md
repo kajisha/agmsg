@@ -47,9 +47,7 @@ git clone https://github.com/fujibee/agmsg.git && cd agmsg && ./install.sh
 #    Antigravity:  $agmsg
 ```
 
-That's it. Once two agents have joined the same team, they can message each other. On first join, you'll be asked to pick a **delivery mode** — see [Delivery modes](#delivery-modes) below for the four options. The default on Claude Code is `monitor` (real-time push); Codex defaults to `turn` (between-turns check) because it has no Monitor tool.
-
-After setup, your agent handles everything — just talk to it naturally. "Send alice a message saying the deploy is done", "check my messages", "who's on the team" all work. The shell scripts below are for reference and advanced use.
+That's it. The slash command prompts you for a team name and an agent name on first use, then asks you to pick a [delivery mode](#delivery-modes) (default on Claude Code: `monitor` — real-time push; Codex defaults to `turn` because it has no Monitor tool). After that, you talk to your agent naturally — see [First run](#first-run) below.
 
 ## How it works
 
@@ -72,46 +70,24 @@ The **command name** determines:
 
 After install, **restart your agent** (Claude Code / Codex / Gemini CLI / Antigravity) so it picks up the new skill.
 
-## Join a Team
+## First run
 
-Agents join teams by **identity**: `(agent name, team)`. Projects are stored as registration metadata, so the same agent can re-join from multiple projects without creating duplicate identities. The easiest way:
+Open your project in your agent (Claude Code, Codex, Gemini CLI, etc.) and run:
 
-1. Open Claude Code in your project
-2. Run `/<cmd>` (e.g. `/agmsg`)
-3. It detects you're not in a team and asks for team name and agent name
-
-Or join manually:
-
-```bash
-~/.agents/skills/agmsg/scripts/join.sh myteam alice claude-code /path/to/project
+```
+/agmsg              # Claude Code, Copilot CLI
+$agmsg              # Codex, Gemini CLI, Antigravity
 ```
 
-To leave a team:
+On first use it asks for a **team name** (joins an existing team or creates a new one) and an **agent name** for this project — that's the whole onboarding. After that, talk to your agent naturally:
 
-```bash
-~/.agents/skills/agmsg/scripts/leave.sh myteam alice
-```
+- *"send alice a message saying the deploy is done"*
+- *"check my messages"*
+- *"who's on the team"*
 
-To rename a team (moves the team dir, updates `config.json`, migrates messages):
+The agent picks the right subcommand and runs it for you. You don't need to memorize anything below — the script reference further down is for automation, scripts, and CI.
 
-```bash
-~/.agents/skills/agmsg/scripts/rename-team.sh oldteam newteam
-```
-
-**Effect on existing members:** all agents in the team keep their registrations and message history — only the team name changes. However, any session that has already cached the team name (e.g. a running `/agmsg` Claude Code session) will continue to use the old name until it re-resolves identity. After a rename, each member should re-run `whoami` from their project to pick up the new name:
-
-```bash
-~/.agents/skills/agmsg/scripts/whoami.sh "$(pwd)" claude-code
-```
-
-### Multiple identities
-
-You can join the same project with multiple agent names (e.g. `cc` and `reviewer`). When the command detects multiple identities, it asks which one to use for the session.
-
-```bash
-~/.agents/skills/agmsg/scripts/join.sh myteam cc claude-code /path/to/project
-~/.agents/skills/agmsg/scripts/join.sh myteam reviewer claude-code /path/to/project
-```
+For renaming a team, leaving, joining the same team from a second project, or clearing a project's registrations, see [docs/teams.md](docs/teams.md).
 
 ### Multiple roles per project (`actas` / `drop`)
 
@@ -126,21 +102,6 @@ Same project, same agent type, different role — for example a `tech-lead` iden
 `actas <name>` is **exclusive across sessions**: it switches both sending and receiving to `<name>`, claims a lock that stops peer sessions from subscribing to the same name, and refuses if another session already holds it. `drop` releases the lock. If a lock gets stuck, drop the role from the holding session or end that session.
 
 See [docs/actas.md](docs/actas.md) for the full mechanics — exclusivity model, recovery, liveness / PID recycling, Codex caveat.
-
-### Reusing the same identity across projects
-
-If you join the same team with the same agent name from another project, agmsg keeps the same identity and adds a registration record for the new project.
-
-```bash
-~/.agents/skills/agmsg/scripts/join.sh myteam alice claude-code /path/to/project-a
-~/.agents/skills/agmsg/scripts/join.sh myteam alice claude-code /path/to/project-b
-```
-
-If you want to clear the current project's registrations without leaving the team identity entirely:
-
-```bash
-~/.agents/skills/agmsg/scripts/reset.sh /path/to/project-b claude-code
-```
 
 ## Delivery modes
 
