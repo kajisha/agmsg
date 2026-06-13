@@ -116,26 +116,32 @@ command -v "$CLI_BIN" >/dev/null 2>&1 \
 # registered for this project (any type). Zero or many → require --team.
 resolve_team() {
   [ -d "$TEAMS_DIR" ] || return 0
-  local config_file team_name escaped count_for_project
+  local config_file team_name cfg_sql proj_sql count_for_project
   local found=""
+  # Read each config via readfile() and compare with SQL string literals rather
+  # than `.param set` bindings: the sqlite3 shell's dot-command tokenizer does
+  # NOT honour SQL '' escaping, so a value containing a single quote (a project
+  # path like /tmp/pro'j) breaks `.param set`. SQL string literals do honour ''.
+  proj_sql=$(printf '%s' "$PROJECT" | sed "s/'/''/g")
   for config_file in "$TEAMS_DIR"/*/config.json; do
     [ -f "$config_file" ] || continue
-    escaped=$(sed "s/'/''/g" "$config_file")
-    team_name=$(sqlite3 :memory: ".param set :json '$escaped'" \
-      "SELECT json_extract(:json, '\$.name');")
-    # Does any agent in this team have a registration for PROJECT?
-    count_for_project=$(sqlite3 :memory: ".param set :json '$escaped'" "
-      WITH agents AS (
+    cfg_sql=$(printf '%s' "$config_file" | sed "s/'/''/g")
+    team_name=$(sqlite3 :memory: \
+      "SELECT json_extract(CAST(readfile('$cfg_sql') AS TEXT), '\$.name');")
+    # Does any agent in this team have a registration for PROJECT (any type)?
+    count_for_project=$(sqlite3 :memory: "
+      WITH cfg AS (SELECT CAST(readfile('$cfg_sql') AS TEXT) AS json),
+      agents AS (
         SELECT
           CASE
             WHEN json_type(json_extract(value, '\$.registrations')) = 'array' THEN json_extract(value, '\$.registrations')
             ELSE json_array(json_object('type', json_extract(value, '\$.type'), 'project', json_extract(value, '\$.project')))
           END AS registrations
-        FROM json_each(json_extract(:json, '\$.agents'))
+        FROM cfg, json_each(json_extract(cfg.json, '\$.agents'))
       )
       SELECT COUNT(*)
       FROM agents, json_each(agents.registrations) AS r
-      WHERE json_extract(r.value, '\$.project') = '$PROJECT';
+      WHERE json_extract(r.value, '\$.project') = '$proj_sql';
     ")
     if [ "${count_for_project:-0}" -gt 0 ]; then
       found="${found:+$found
@@ -183,7 +189,12 @@ esac
 # agent run `/agmsg actas <name>` on boot. We cd into the project first so a
 # cross-project spawn lands in the right tree, and drop into an interactive
 # shell afterwards so the window/pane stays open with the agent's final output.
-ACTAS_PROMPT="/agmsg actas ${NAME}"
+# The slash command is named after the installed command, which the user may
+# have customized at install time (install.sh --cmd). Derive it from the skill
+# dir basename so a custom install (e.g. `/m`) spawns `/m actas <name>` rather
+# than a nonexistent `/agmsg actas <name>`.
+CMD_NAME="$(basename "$SKILL_DIR")"
+ACTAS_PROMPT="/${CMD_NAME} actas ${NAME}"
 
 BOOT_DIR="${TMPDIR:-/tmp}/agmsg-spawn"
 mkdir -p "$BOOT_DIR" 2>/dev/null || true
@@ -299,8 +310,17 @@ place_and_launch() {
 
   case "$(uname -s)" in
     Darwin)
-      # Bare override (no {cmd}) is an app-name hint here, e.g. "iterm".
-      launch_macos_terminal "${TERMINAL_TMPL:-Terminal}" ;;
+      # Default to the terminal the user is *currently* in, so spawning from
+      # iTerm opens iTerm rather than jarringly launching Terminal.app. A bare
+      # override (no {cmd}) is an explicit app-name hint and wins, e.g. "iterm".
+      local mac_app="${TERMINAL_TMPL:-}"
+      if [ -z "$mac_app" ]; then
+        case "${TERM_PROGRAM:-}" in
+          iTerm.app) mac_app="iterm" ;;
+          *)         mac_app="Terminal" ;;
+        esac
+      fi
+      launch_macos_terminal "$mac_app" ;;
     Linux)
       if [ -n "$TERMINAL_TMPL" ]; then
         die "AGMSG_TERMINAL/spawn.terminal must contain a {cmd} placeholder on Linux (got: $TERMINAL_TMPL)"

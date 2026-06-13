@@ -93,6 +93,21 @@ teardown() {
   [[ "$output" =~ "multiple teams" ]]
 }
 
+@test "spawn: team resolution survives a single quote in the project path" {
+  # resolve_team reads configs via readfile() + SQL string literals, so a
+  # project path with a single quote no longer produces a SQL syntax error or
+  # a false "no team is registered". (The spawn as a whole may still fail
+  # downstream: join.sh and the other shared scripts bind config JSON via
+  # `.param set`, which can't carry a single quote — a pre-existing,
+  # codebase-wide limitation tracked separately, not introduced here.)
+  local quoted="$TEST_SKILL_DIR/pro'j"
+  mkdir -p "$quoted"
+  bash "$SCRIPTS/join.sh" myteam existing claude-code "$quoted"
+  run bash "$SCRIPTS/spawn.sh" claude-code alice --project "$quoted"
+  [[ "$output" != *"no team is registered"* ]]
+  [[ "$output" != *"syntax error"* ]]
+}
+
 @test "spawn: --team disambiguates a multi-team project" {
   bash "$SCRIPTS/join.sh" team-a existing-a claude-code "$PROJ"
   bash "$SCRIPTS/join.sh" team-b existing-b codex "$PROJ"
@@ -117,14 +132,33 @@ teardown() {
   # The terminal template is handed the path to a generated boot script; that
   # script cd's into the project and runs claude with the actas slash command.
   # (printf %q escapes the spaces in the prompt as "\ ", so assert on tokens.)
+  # The slash command is named after the skill dir basename (the install
+  # command name), not a hardcoded "agmsg".
+  local cmd; cmd="$(basename "$TEST_SKILL_DIR")"
   boot="$(cat "$CAPTURE")"
   [ -f "$boot" ]
   run cat "$boot"
   [[ "$output" == *"claude"* ]]
-  [[ "$output" == *"agmsg"* ]]
+  [[ "$output" == *"/$cmd"* ]]
   [[ "$output" == *"actas"* ]]
   [[ "$output" == *"alice"* ]]
   [[ "$output" == *"$PROJ"* ]]
+}
+
+@test "spawn: actas prompt uses the install command name (not hardcoded agmsg)" {
+  # Rename the skill dir to a custom command name and re-point SCRIPTS so the
+  # script resolves SKILL_DIR basename = the custom name.
+  local custom="$TEST_SKILL_DIR/../m-$$"
+  cp -R "$TEST_SKILL_DIR" "$custom"
+  bash "$custom/scripts/join.sh" myteam existing claude-code "$PROJ"
+  run env AGMSG_TERMINAL="$STUB_BIN/record.sh {cmd}" \
+    bash "$custom/scripts/spawn.sh" claude-code alice --project "$PROJ"
+  [ "$status" -eq 0 ]
+  boot="$(cat "$CAPTURE")"
+  run cat "$boot"
+  [[ "$output" == *"/m-$$"* ]]
+  [[ "$output" != *"/agmsg actas"* ]]
+  rm -rf "$custom"
 }
 
 @test "spawn: errors when \$TMUX is set but tmux is not on PATH" {
