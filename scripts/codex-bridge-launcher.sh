@@ -53,7 +53,15 @@ done
 
 pidfile="$RUN_DIR/codex-bridge.$team.$name.pid"
 log="$RUN_DIR/codex-bridge.$team.$name.log"
-bridge_cmd="${AGMSG_CODEX_BRIDGE_CMD:-$SCRIPT_DIR/codex-bridge.js}"
+# An explicit AGMSG_CODEX_BRIDGE_CMD is a complete runnable (tests, custom
+# wrappers) — run it as-is. Only the default codex-bridge.js is launched through
+# a resolved Node, since its env-node shebang fails where a version-manager Node
+# is not on PATH (#170).
+if [ -n "${AGMSG_CODEX_BRIDGE_CMD:-}" ]; then
+  bridge_run=("$AGMSG_CODEX_BRIDGE_CMD")
+else
+  bridge_run=("$NODE_BIN" "$SCRIPT_DIR/codex-bridge.js")
+fi
 
 while kill -0 "$PARENT_PID" 2>/dev/null; do
   if [ -f "$pidfile" ]; then
@@ -79,7 +87,7 @@ EOF
     fi
   fi
 
-  nohup "$NODE_BIN" "$bridge_cmd" \
+  nohup "${bridge_run[@]}" \
     --project "$PROJECT" \
     --type "$TYPE" \
     --team "$team" \
