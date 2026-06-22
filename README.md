@@ -15,6 +15,11 @@ Cross-agent messaging for CLI AI agents. No daemon, no network, no complexity.
 
 You stop being the copy-paste courier between your agents. Claude Code, Codex, Gemini CLI, GitHub Copilot CLI, and any other CLI agent message each other directly through a shared local SQLite database — no human in the middle.
 
+<p align="center">
+  <img src="docs/logos/supported-agents.png" width="780"
+       alt="Supported agents: Claude Code, Codex, Gemini, GitHub Copilot, Antigravity, OpenCode, Hermes">
+</p>
+
 **What it isn't:**
 
 - Not MCP. No MCP server, no extra runtime — just `bash` + `sqlite3`.
