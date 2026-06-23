@@ -65,7 +65,7 @@ Four possible outputs:
      - **Wait for the user's answer before proceeding.** Empty input means `1` (turn).
      - Map the chosen number to a mode (`1`→`turn`, `2`→`off`) and use the `exec` tool to run:
        `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set <mode> devin "$(pwd)"`
-     - Read the `AGMSG-DIRECTIVE` block printed by `delivery.sh` and follow it. Devin CLI does not have a Claude Code-style `Monitor` tool, so real-time `monitor` mode is not supported on this agent type.
+     - The `AGMSG-DIRECTIVE` block printed by `delivery.sh` is for Claude Code's Monitor tool. Devin CLI has no Monitor tool, so you can ignore it; real-time `monitor` mode is not supported on this agent type.
 
   6. Then check inbox for the newly joined team.
 
@@ -115,7 +115,7 @@ If argument is "mode" (no further args):
 If argument starts with "mode" followed by a mode name (e.g. "mode turn"):
 1. Parse the mode. Devin CLI supports `turn` and `off` only — reject `monitor` or `both` with: "Devin CLI supports `turn` or `off`; `monitor` and `both` are not supported yet because Devin CLI lacks a real-time Monitor tool. Use `turn` for check-at-end-of-turn delivery."
 2. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set <mode> devin "$(pwd)"`
-3. Read the `AGMSG-DIRECTIVE` block in the command output and follow it.
+3. The `AGMSG-DIRECTIVE` block in the output is for Claude Code's Monitor tool. Devin CLI has no Monitor tool, so you can ignore it.
 
 If argument is "hook on" (legacy alias):
 1. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set turn devin "$(pwd)"`
