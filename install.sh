@@ -387,11 +387,19 @@ if [ ! -f "$SKILL_DIR/db/config.yaml" ]; then
 fi
 
 # --- Install Claude Code global command ---
+# Only drop the Claude Code slash command when the install is for Claude Code
+# or when no agent type is specified (mixed/default install). Agent-specific
+# installs for other runtimes should not register a /cmd that could shadow
+# that runtime's own skill discovery (e.g. Devin CLI also reads
+# ~/.claude/commands and would pick up the Claude Code template instead of
+# its own ~/.config/devin/skills/<cmd>/SKILL.md).
 CC_COMMANDS_DIR="$HOME/.claude/commands"
 if [ -d "$HOME/.claude" ]; then
-  mkdir -p "$CC_COMMANDS_DIR"
-  sed "s/__SKILL_NAME__/$CMD_NAME/g" "$(agmsg_type_template_path claude-code)" > "$CC_COMMANDS_DIR/$CMD_NAME.md"
-  echo "  + installed /$CMD_NAME command to ~/.claude/commands/"
+  if [ -z "$AGENT_TYPE" ] || [ "$AGENT_TYPE" = "claude-code" ]; then
+    mkdir -p "$CC_COMMANDS_DIR"
+    sed "s/__SKILL_NAME__/$CMD_NAME/g" "$(agmsg_type_template_path claude-code)" > "$CC_COMMANDS_DIR/$CMD_NAME.md"
+    echo "  + installed /$CMD_NAME command to ~/.claude/commands/"
+  fi
 fi
 
 # --- Install Copilot CLI skill ---
