@@ -13,16 +13,16 @@ Agent messaging command for **Devin CLI**. **IMPORTANT: Always use the provided 
 
 If you already know your AGENT and TEAMS from a previous `/__SKILL_NAME__` call in this session, skip to **Execute** below.
 
-Otherwise, use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/whoami.sh "$(pwd)" devin`
+Otherwise, use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/whoami.sh "$(pwd)" devin-cli`
 
 Four possible outputs:
 
 **A) Single identity:**
-`agent=<name> teams=<t1,t2,...> type=devin project=<path>`
+`agent=<name> teams=<t1,t2,...> type=devin-cli project=<path>`
 → Remember AGENT and TEAMS, then go to **Execute**.
 
 **B) Multiple identities:**
-`multiple=true agents=<n1,n2,...> teams=<t1,t2,...> type=devin project=<path>`
+`multiple=true agents=<n1,n2,...> teams=<t1,t2,...> type=devin-cli project=<path>`
 → Ask the user which agent name to use for this session, then go to **Execute**.
 
 **C) Not in a team:**
@@ -36,7 +36,7 @@ Four possible outputs:
 
   1. Ask: "Enter a team name (joins existing or creates new)"
   2. Ask: "Enter a name for this agent"
-  3. **You MUST use join.sh** — use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/join.sh <team> <agent_name> devin "$(pwd)"`
+  3. **You MUST use join.sh** — use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/join.sh <team> <agent_name> devin-cli "$(pwd)"`
   4. Show the result and explain:
 
   > **Joined!** You can now use `/__SKILL_NAME__` to check and send messages.
@@ -64,19 +64,19 @@ Four possible outputs:
 
      - **Wait for the user's answer before proceeding.** Empty input means `1` (turn).
      - Map the chosen number to a mode (`1`→`turn`, `2`→`off`) and use the `exec` tool to run:
-       `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set <mode> devin "$(pwd)"`
+       `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set <mode> devin-cli "$(pwd)"`
      - The `AGMSG-DIRECTIVE` block printed by `delivery.sh` is for Claude Code's Monitor tool. Devin CLI has no Monitor tool, so you can ignore it; real-time `monitor` mode is not supported on this agent type.
 
   6. Then check inbox for the newly joined team.
 
 **D) Suggestions for reuse:**
-`suggest=true agents=<n1,n2,...> teams=<t1,t2,...> type=devin project=<path> available_teams=<t1,t2,...>`
+`suggest=true agents=<n1,n2,...> teams=<t1,t2,...> type=devin-cli project=<path> available_teams=<t1,t2,...>`
 → No exact registration exists for this project, but there are same-type agent names registered elsewhere.
 
   1. Show the suggested agent names to the user.
   2. Ask whether to reuse one of those names or choose a new one.
   3. Ask for the team name to join (existing or new).
-  4. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/join.sh <team> <agent_name> devin "$(pwd)"`
+  4. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/join.sh <team> <agent_name> devin-cli "$(pwd)"`
   5. Then continue with the normal post-join flow above.
 
 ## Execute
@@ -109,20 +109,20 @@ If argument starts with "config set" (e.g. "config set hook.check_interval 30"):
 2. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/config.sh set <key> <value>`
 
 If argument is "mode" (no further args):
-1. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh status devin "$(pwd)"`
+1. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh status devin-cli "$(pwd)"`
 2. Show the output to the user.
 
 If argument starts with "mode" followed by a mode name (e.g. "mode turn"):
 1. Parse the mode. Devin CLI supports `turn` and `off` only — reject `monitor` or `both` with: "Devin CLI supports `turn` or `off`; `monitor` and `both` are not supported yet because Devin CLI lacks a real-time Monitor tool. Use `turn` for check-at-end-of-turn delivery."
-2. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set <mode> devin "$(pwd)"`
+2. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set <mode> devin-cli "$(pwd)"`
 3. The `AGMSG-DIRECTIVE` block in the output is for Claude Code's Monitor tool. Devin CLI has no Monitor tool, so you can ignore it.
 
 If argument is "hook on" (legacy alias):
-1. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set turn devin "$(pwd)"`
+1. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set turn devin-cli "$(pwd)"`
 2. Tell the user: "Delivery mode set to 'turn' (legacy hook on behavior)."
 
 If argument is "hook off" (legacy alias):
-1. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set off devin "$(pwd)"`
+1. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/delivery.sh set off devin-cli "$(pwd)"`
 2. Tell the user: "Delivery mode set to 'off'."
 
 If argument is "version":
@@ -130,7 +130,7 @@ If argument is "version":
 2. Show the output — the installed version (git-describe provenance recorded at install time).
 
 If argument is "reset":
-1. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/reset.sh "$(pwd)" devin`
+1. Use the `exec` tool to run: `~/.agents/skills/__SKILL_NAME__/scripts/reset.sh "$(pwd)" devin-cli`
 2. Tell the user the result.
 
 If argument starts with "actas", "drop", "spawn", or "despawn":

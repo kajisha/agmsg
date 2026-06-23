@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# devin delivery plug.
+# devin-cli delivery plug.
 #
 # Devin CLI reads hooks from `.devin/hooks.v1.json`, whose top-level keys are
 # event names (e.g. `Stop`) rather than wrapped in a `.hooks` object like
@@ -9,11 +9,11 @@
 # sql_readfile_path, and agmsg_sqlite_mem are in scope.
 
 # Strip agmsg-owned entries from a top-level event array in hooks.v1.json.
-_devin_strip_event() {
+_devin_cli_strip_event() {
   local path="$1" event="$2"
   local sql_path tmp tmp_sql wrote
   sql_path=$(sql_readfile_path "$path")
-  tmp=$(mktemp "${TMPDIR:-/tmp}/agmsg-devin.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/agmsg-devin-cli.XXXXXX")
   tmp_sql=$(sql_readfile_path "$tmp")
   wrote=$(agmsg_sqlite_mem "
     WITH src AS (SELECT readfile('$sql_path') AS j),
@@ -42,14 +42,14 @@ _devin_strip_event() {
 }
 
 # Add a top-level event entry to hooks.v1.json.
-_devin_add_event() {
+_devin_cli_add_event() {
   local path="$1" event="$2" cmd="$3"
   local sql_path cmd_lit hook_obj entry_sql tmp tmp_sql wrote
   sql_path=$(sql_readfile_path "$path")
   cmd_lit=$(printf '%s' "$cmd" | sed "s/'/''/g")
   hook_obj="json_object('type','command','command','$cmd_lit')"
   entry_sql="json_object('matcher','','hooks',json_array($hook_obj))"
-  tmp=$(mktemp "${TMPDIR:-/tmp}/agmsg-devin.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/agmsg-devin-cli.XXXXXX")
   tmp_sql=$(sql_readfile_path "$tmp")
   wrote=$(agmsg_sqlite_mem "
     WITH base AS (
@@ -83,21 +83,21 @@ agmsg_delivery_apply() {
   mkdir -p "$(dirname "$hooks_file")"
 
   local tmp_state
-  tmp_state=$(mktemp "${TMPDIR:-/tmp}/agmsg-devin-state.XXXXXX")
+  tmp_state=$(mktemp "${TMPDIR:-/tmp}/agmsg-devin-cli-state.XXXXXX")
   if [ -f "$hooks_file" ]; then
     cp "$hooks_file" "$tmp_state"
   else
     printf '{}' > "$tmp_state"
   fi
 
-  _devin_strip_event "$tmp_state" "Stop"
-  _devin_strip_event "$tmp_state" "SessionStart"
-  _devin_strip_event "$tmp_state" "SessionEnd"
+  _devin_cli_strip_event "$tmp_state" "Stop"
+  _devin_cli_strip_event "$tmp_state" "SessionStart"
+  _devin_cli_strip_event "$tmp_state" "SessionEnd"
 
   case "$mode" in
     turn)
       local cmd="'$SKILL_DIR/scripts/check-inbox.sh' '$type' '$project'"
-      _devin_add_event "$tmp_state" "Stop" "$cmd"
+      _devin_cli_add_event "$tmp_state" "Stop" "$cmd"
       ;;
     monitor|both)
       echo "Devin CLI does not support monitor/both delivery." >&2

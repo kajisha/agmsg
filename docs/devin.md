@@ -2,7 +2,7 @@
 
 Devin CLI is supported for **manual and turn/off delivery workflows**.
 
-`monitor`, `both`, and `spawn devin` are not supported in this release. Devin CLI can participate in an agmsg team alongside Claude Code, Codex, Gemini CLI, and other CLI agents.
+`monitor`, `both`, and `spawn devin-cli` are not supported in this release. Devin CLI can participate in an agmsg team alongside Claude Code, Codex, Gemini CLI, and other CLI agents.
 
 ## Install
 
@@ -20,10 +20,10 @@ Codex-typed). This is the recommended approach for mixed Codex + Devin CLI teams
 **Devin CLI-only (no Codex):**
 
 ```bash
-bash <(curl -fsSL https://agmsg.cc/install.sh) --agent-type devin
+bash <(curl -fsSL https://agmsg.cc/install.sh) --agent-type devin-cli
 ```
 
-`--agent-type devin` overwrites the shared `~/.agents/skills/agmsg/SKILL.md`
+`--agent-type devin-cli` overwrites the shared `~/.agents/skills/agmsg/SKILL.md`
 with the Devin CLI template. Use this only when Codex is **not** installed; it
 will break Codex identification if both agents share the same `~/.agents/` path.
 
@@ -53,8 +53,8 @@ On first run it prompts for a team name and agent name, then joins you to the te
 Or join directly from the shell:
 
 ```bash
-~/.agents/skills/agmsg/scripts/join.sh <team> <agent_name> devin "$(pwd)"
-~/.agents/skills/agmsg/scripts/delivery.sh set turn devin "$(pwd)"
+~/.agents/skills/agmsg/scripts/join.sh <team> <agent_name> devin-cli "$(pwd)"
+~/.agents/skills/agmsg/scripts/delivery.sh set turn devin-cli "$(pwd)"
 ```
 
 ## Common actions
@@ -102,12 +102,12 @@ Switch mode:
 Requesting `monitor` or `both` returns an error:
 
 ```
-Error: 'monitor' mode is not supported for devin (supported: turn off).
+Error: 'monitor' mode is not supported for devin-cli (supported: turn off).
 ```
 
 ## Spawn
 
-`spawn devin` is not supported. Spawn is limited to `claude-code` and `codex`.
+`spawn devin-cli` is not supported. Spawn is limited to `claude-code` and `codex`.
 
 ## Typical team setup
 
@@ -127,7 +127,7 @@ Devin CLI is well-suited for tasks such as:
 ## Known limitations
 
 - No real-time push delivery (`monitor` mode requires Claude Code's Monitor tool)
-- No `spawn devin` support
+- No `spawn devin-cli` support
 - No `actas`/`drop` exclusivity locks (Devin CLI has no session-id environment variable)
 
 These may be addressed in future releases.

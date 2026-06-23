@@ -105,7 +105,7 @@ cd agmsg
 ./install.sh --cmd m      # Non-interactive with custom command name
 ./install.sh --agent-type gemini    # Install a Gemini-oriented SKILL.md
 ./install.sh --agent-type opencode  # OpenCode-only: sets shared skill to OpenCode template
-./install.sh --agent-type devin     # Devin CLI: sets shared skill to Devin CLI template
+./install.sh --agent-type devin-cli  # Devin CLI: sets shared skill to Devin CLI template
 ```
 
 The **command name** determines:
@@ -300,7 +300,7 @@ See [docs/opencode.md](docs/opencode.md) for full setup instructions.
 /agmsg
 ```
 
-Install with `./install.sh` (when `~/.config/devin/` exists, the Devin CLI-typed skill is placed automatically at `~/.config/devin/skills/agmsg/` alongside the default Codex-typed shared skill). Use `--agent-type devin` only for Devin CLI-only environments where Codex is not installed. Devin CLI is supported for manual and `turn`/`off` delivery workflows. It currently supports `mode turn` and `mode off`; `monitor`, `both`, and `spawn devin` are not supported, because Devin CLI does not have a real-time `Monitor` tool.
+Install with `./install.sh` (when `~/.config/devin/` exists, the Devin CLI-typed skill is placed automatically at `~/.config/devin/skills/agmsg/` alongside the default Codex-typed shared skill). Use `--agent-type devin-cli` only for Devin CLI-only environments where Codex is not installed. Devin CLI is supported for manual and `turn`/`off` delivery workflows. It currently supports `mode turn` and `mode off`; `monitor`, `both`, and `spawn devin-cli` are not supported, because Devin CLI does not have a real-time `Monitor` tool.
 
 See [docs/devin.md](docs/devin.md) for full setup instructions.
 

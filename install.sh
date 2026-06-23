@@ -56,7 +56,7 @@ agmsg_source_version() {
 CMD_NAME=""
 UPDATE_ONLY=false
 INTERACTIVE=true
-AGENT_TYPE=""  # claude-code, codex, gemini, antigravity, opencode, hermes, cursor, devin — passed via --agent-type, or empty for auto/default
+AGENT_TYPE=""  # claude-code, codex, gemini, antigravity, opencode, hermes, cursor, devin-cli — passed via --agent-type, or empty for auto/default
 
 configure_codex_sandbox() {
   # --- Configure Codex sandbox (if Codex is installed) ---
@@ -162,7 +162,7 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --cmd <name>      Command & skill folder name (default: agmsg)"
       echo "                    Claude Code: /<cmd>, Codex/Gemini/Antigravity: \$<cmd>"
-      echo "  --agent-type <t>  Agent type: claude-code, codex, gemini, antigravity, opencode, hermes, cursor, devin"
+      echo "  --agent-type <t>  Agent type: claude-code, codex, gemini, antigravity, opencode, hermes, cursor, devin-cli"
       echo "                    Selects which template becomes SKILL.md (matches the"
       echo "                    <type> arg passed to join.sh / whoami.sh)"
       echo "  --update          Update skill scripts only (preserve DB and teams)"
@@ -241,7 +241,7 @@ if [ "$UPDATE_ONLY" = true ]; then
   # shared SKILL.md; their dedicated copies are dropped separately below.)
   TPL_TYPE="codex"
   case "$AGENT_TYPE" in
-    gemini|antigravity|opencode|hermes|cursor|devin) TPL_TYPE="$AGENT_TYPE" ;;
+    gemini|antigravity|opencode|hermes|cursor|devin-cli) TPL_TYPE="$AGENT_TYPE" ;;
   esac
   sed "s/__SKILL_NAME__/$SKILL_NAME/g" "$(agmsg_type_template_path "$TPL_TYPE")" > "$SKILL_DIR/SKILL.md"
   # Recursive copy so nested helper dirs (scripts/lib/, scripts/drivers/types/)
@@ -284,7 +284,7 @@ if [ "$UPDATE_ONLY" = true ]; then
   DEVIN_SKILL_DIR="$HOME/.config/devin/skills/$SKILL_NAME"
   if [ -d "$HOME/.config/devin" ]; then
     mkdir -p "$DEVIN_SKILL_DIR"
-    sed "s/__SKILL_NAME__/$SKILL_NAME/g" "$(agmsg_type_template_path devin)" > "$DEVIN_SKILL_DIR/SKILL.md"
+    sed "s/__SKILL_NAME__/$SKILL_NAME/g" "$(agmsg_type_template_path devin-cli)" > "$DEVIN_SKILL_DIR/SKILL.md"
   fi
   cp "$SCRIPT_DIR/openai.yaml" "$SKILL_DIR/agents/openai.yaml" 2>/dev/null || true
   chmod +x "$SKILL_DIR/scripts/"*.sh
@@ -340,10 +340,10 @@ mkdir -p "$SKILL_DIR"/{scripts,types,db,agents}
 
 # SKILL.md is generated from the agent-specific command template, resolved from
 # the type manifest (scripts/drivers/types/<type>/template.md). The shared SKILL.md uses the
-# codex template by default; gemini/antigravity/opencode/devin get their own.
+# codex template by default; gemini/antigravity/opencode/devin-cli get their own.
 TPL_TYPE="codex"
 case "$AGENT_TYPE" in
-  gemini|antigravity|opencode|hermes|cursor|devin) TPL_TYPE="$AGENT_TYPE" ;;
+  gemini|antigravity|opencode|hermes|cursor|devin-cli) TPL_TYPE="$AGENT_TYPE" ;;
 esac
 sed "s/__SKILL_NAME__/$CMD_NAME/g" "$(agmsg_type_template_path "$TPL_TYPE")" > "$SKILL_DIR/SKILL.md"
 # Recursive copy so nested helper dirs (scripts/lib/, scripts/drivers/types/) ship
@@ -445,7 +445,7 @@ fi
 DEVIN_SKILL_DIR="$HOME/.config/devin/skills/$CMD_NAME"
 if [ -d "$HOME/.config/devin" ]; then
   mkdir -p "$DEVIN_SKILL_DIR"
-  sed "s/__SKILL_NAME__/$CMD_NAME/g" "$(agmsg_type_template_path devin)" > "$DEVIN_SKILL_DIR/SKILL.md"
+  sed "s/__SKILL_NAME__/$CMD_NAME/g" "$(agmsg_type_template_path devin-cli)" > "$DEVIN_SKILL_DIR/SKILL.md"
   echo "  + installed /$CMD_NAME skill to ~/.config/devin/skills/"
 fi
 
