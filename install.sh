@@ -56,7 +56,7 @@ agmsg_source_version() {
 CMD_NAME=""
 UPDATE_ONLY=false
 INTERACTIVE=true
-AGENT_TYPE=""  # claude-code, codex, gemini, antigravity — passed via --agent-type, or empty for auto/default
+AGENT_TYPE=""  # claude-code, codex, gemini, antigravity, opencode, hermes, cursor, devin — passed via --agent-type, or empty for auto/default
 
 configure_codex_sandbox() {
   # --- Configure Codex sandbox (if Codex is installed) ---
@@ -162,7 +162,7 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --cmd <name>      Command & skill folder name (default: agmsg)"
       echo "                    Claude Code: /<cmd>, Codex/Gemini/Antigravity: \$<cmd>"
-      echo "  --agent-type <t>  Agent type: claude-code, codex, gemini, antigravity, opencode, hermes, cursor"
+      echo "  --agent-type <t>  Agent type: claude-code, codex, gemini, antigravity, opencode, hermes, cursor, devin"
       echo "                    Selects which template becomes SKILL.md (matches the"
       echo "                    <type> arg passed to join.sh / whoami.sh)"
       echo "  --update          Update skill scripts only (preserve DB and teams)"
@@ -241,7 +241,7 @@ if [ "$UPDATE_ONLY" = true ]; then
   # shared SKILL.md; their dedicated copies are dropped separately below.)
   TPL_TYPE="codex"
   case "$AGENT_TYPE" in
-    gemini|antigravity|opencode|hermes|cursor) TPL_TYPE="$AGENT_TYPE" ;;
+    gemini|antigravity|opencode|hermes|cursor|devin) TPL_TYPE="$AGENT_TYPE" ;;
   esac
   sed "s/__SKILL_NAME__/$SKILL_NAME/g" "$(agmsg_type_template_path "$TPL_TYPE")" > "$SKILL_DIR/SKILL.md"
   # Recursive copy so nested helper dirs (scripts/lib/, scripts/drivers/types/)
@@ -279,6 +279,12 @@ if [ "$UPDATE_ONLY" = true ]; then
   if [ -d "$HOME/.hermes" ]; then
     mkdir -p "$HERMES_SKILL_DIR"
     sed "s/__SKILL_NAME__/$SKILL_NAME/g" "$(agmsg_type_template_path hermes)" > "$HERMES_SKILL_DIR/SKILL.md"
+  fi
+  # Refresh / install the Devin CLI skill (same reasoning as Copilot above).
+  DEVIN_SKILL_DIR="$HOME/.config/devin/skills/$SKILL_NAME"
+  if [ -d "$HOME/.config/devin" ]; then
+    mkdir -p "$DEVIN_SKILL_DIR"
+    sed "s/__SKILL_NAME__/$SKILL_NAME/g" "$(agmsg_type_template_path devin)" > "$DEVIN_SKILL_DIR/SKILL.md"
   fi
   cp "$SCRIPT_DIR/openai.yaml" "$SKILL_DIR/agents/openai.yaml" 2>/dev/null || true
   chmod +x "$SKILL_DIR/scripts/"*.sh
@@ -334,10 +340,10 @@ mkdir -p "$SKILL_DIR"/{scripts,types,db,agents}
 
 # SKILL.md is generated from the agent-specific command template, resolved from
 # the type manifest (scripts/drivers/types/<type>/template.md). The shared SKILL.md uses the
-# codex template by default; gemini/antigravity/opencode get their own.
+# codex template by default; gemini/antigravity/opencode/devin get their own.
 TPL_TYPE="codex"
 case "$AGENT_TYPE" in
-  gemini|antigravity|opencode|hermes|cursor) TPL_TYPE="$AGENT_TYPE" ;;
+  gemini|antigravity|opencode|hermes|cursor|devin) TPL_TYPE="$AGENT_TYPE" ;;
 esac
 sed "s/__SKILL_NAME__/$CMD_NAME/g" "$(agmsg_type_template_path "$TPL_TYPE")" > "$SKILL_DIR/SKILL.md"
 # Recursive copy so nested helper dirs (scripts/lib/, scripts/drivers/types/) ship
@@ -423,6 +429,18 @@ if [ -d "$HOME/.hermes" ]; then
   echo "  + installed /$CMD_NAME skill to ~/.hermes/skills/"
 fi
 
+# --- Install Devin CLI skill ---
+# Devin CLI reads global skills from ~/.config/devin/skills/<name>/SKILL.md. The
+# shared ~/.agents/skills/<name>/SKILL.md is Codex-typed (whoami ... codex) and
+# would mis-identify a Devin CLI session — keep the Devin CLI copy separate,
+# same pattern as Copilot and OpenCode.
+DEVIN_SKILL_DIR="$HOME/.config/devin/skills/$CMD_NAME"
+if [ -d "$HOME/.config/devin" ]; then
+  mkdir -p "$DEVIN_SKILL_DIR"
+  sed "s/__SKILL_NAME__/$CMD_NAME/g" "$(agmsg_type_template_path devin)" > "$DEVIN_SKILL_DIR/SKILL.md"
+  echo "  + installed /$CMD_NAME skill to ~/.config/devin/skills/"
+fi
+
 # Codex sandbox writable_roots are configured by configure_codex_sandbox() at
 # the "Done" step below — the single source of truth for db/, teams/, and run/.
 # (A legacy inline copy used to run here too, which double-mutated the array and
@@ -434,7 +452,7 @@ echo ""
 echo "  ✓ Installed to ~/.agents/skills/$CMD_NAME/ (version $INSTALLED_VERSION)"
 echo ""
 echo "  Next steps:"
-echo "    1. Restart your agent (Claude Code / Codex / Gemini CLI / Antigravity / OpenCode) to pick up the new skill"
+echo "    1. Restart your agent (Claude Code / Codex / Gemini CLI / Antigravity / OpenCode / Devin CLI) to pick up the new skill"
 echo "    2. Run the command to join a team:"
 echo "       Claude Code:  /$CMD_NAME"
 echo "       Codex:        \$$CMD_NAME"
@@ -442,6 +460,7 @@ echo "       Gemini CLI:   \$$CMD_NAME"
 echo "       Antigravity:  \$$CMD_NAME"
 echo "       Copilot CLI:  /$CMD_NAME"
 echo "       OpenCode:     \$$CMD_NAME"
+echo "       Devin CLI:    /$CMD_NAME"
 echo "       It will prompt for team name and agent name on first run."
 echo ""
 echo "  Docs: https://agmsg.cc/"

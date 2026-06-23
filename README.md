@@ -13,11 +13,11 @@ Cross-agent messaging for CLI AI agents. No daemon, no network, no complexity.
   </picture>
 </a>
 
-You stop being the copy-paste courier between your agents. Claude Code, Codex, Gemini CLI, GitHub Copilot CLI, and any other CLI agent message each other directly through a shared local SQLite database — no human in the middle.
+You stop being the copy-paste courier between your agents. Claude Code, Codex, Gemini CLI, GitHub Copilot CLI, Devin CLI, and any other CLI agent message each other directly through a shared local SQLite database — no human in the middle.
 
 <p align="center">
   <img src="docs/logos/supported-agents.png" width="780"
-       alt="Supported agents: Claude Code, Codex, Gemini, GitHub Copilot, Antigravity, OpenCode, Hermes">
+       alt="Supported agents: Claude Code, Codex, Gemini, GitHub Copilot, Antigravity, OpenCode, Hermes, Devin CLI">
 </p>
 
 **What it isn't:**
@@ -44,7 +44,7 @@ In real use it looks like this — Claude Code asking Codex for a code review an
 # 1. Install — npx is the fastest path, no clone needed
 npx agmsg
 
-# 2. Restart Claude Code / Codex / Gemini CLI / Antigravity / OpenCode to pick up the new skill
+# 2. Restart Claude Code / Codex / Gemini CLI / Antigravity / OpenCode / Devin CLI to pick up the new skill
 
 # 3. Run the command — it will prompt for team and agent name on first use
 #    Claude Code:  /agmsg
@@ -52,6 +52,7 @@ npx agmsg
 #    Gemini CLI:   $agmsg
 #    Antigravity:  $agmsg
 #    OpenCode:     $agmsg
+#    Devin CLI:    /agmsg
 ```
 
 That's it. The slash command prompts you for a team name and an agent name on first use, then asks you to pick a [delivery mode](#delivery-modes) (default on Claude Code: `monitor` — real-time push; Codex offers a beta `monitor` bridge or `turn`). After that, you talk to your agent naturally — see [First run](#first-run) below.
@@ -104,16 +105,17 @@ cd agmsg
 ./install.sh --cmd m      # Non-interactive with custom command name
 ./install.sh --agent-type gemini    # Install a Gemini-oriented SKILL.md
 ./install.sh --agent-type opencode  # OpenCode-only: sets shared skill to OpenCode template
+./install.sh --agent-type devin     # Devin CLI: sets shared skill to Devin CLI template
 ```
 
 The **command name** determines:
 - Skill folder: `~/.agents/skills/<cmd>/`
-- Claude Code / Copilot CLI: `/<cmd>`
+- Claude Code / Copilot CLI / Devin CLI: `/<cmd>`
 - Codex / Gemini CLI / Antigravity: `$<cmd>`
 
 `--cmd` and `--agent-type` are only available via the direct-script path; the `npm` and plugin paths always install as `agmsg` and auto-detect the host agent type.
 
-After install, **restart your agent** (Claude Code / Codex / Gemini CLI / Copilot CLI / Antigravity / OpenCode) so it picks up the new skill.
+After install, **restart your agent** (Claude Code / Codex / Gemini CLI / Copilot CLI / Antigravity / OpenCode / Devin CLI) so it picks up the new skill.
 
 ### Windows: Git Bash & Codex
 
@@ -142,10 +144,10 @@ Git Bash PATH). There is no PowerShell reimplementation.
 
 ## First run
 
-Open your project in your agent (Claude Code, Codex, Gemini CLI, etc.) and run:
+Open your project in your agent (Claude Code, Codex, Gemini CLI, Devin CLI, etc.) and run:
 
 ```
-/agmsg              # Claude Code, Copilot CLI
+/agmsg              # Claude Code, Copilot CLI, Devin CLI
 $agmsg              # Codex, Gemini CLI, Antigravity
 ```
 
@@ -212,7 +214,7 @@ How incoming messages reach your agent. Pick one at first join via the prompt, o
 | mode | mechanism | latency | who it's for |
 |---|---|---|---|
 | **`monitor`** (default on Claude Code) | SessionStart hook → Monitor tool → blocking SQLite stream | ~5s | Claude Code users wanting real-time push |
-| **`turn`** (default on Codex / Copilot CLI / OpenCode) | Stop hook fires `check-inbox.sh` between assistant turns | until your next interaction | Codex / Copilot CLI / OpenCode (no Monitor tool); Claude Code users on a quieter loop |
+| **`turn`** (default on Codex / Copilot CLI / OpenCode / Devin CLI) | Stop hook fires `check-inbox.sh` between assistant turns | until your next interaction | Codex / Copilot CLI / OpenCode / Devin CLI (no Monitor tool); Claude Code users on a quieter loop |
 | **`both`** | monitor primary, turn as per-session safety net | ~5s; falls back to turn-end on watcher failure | belt-and-suspenders |
 | **`off`** | no automatic delivery | manual `/agmsg` only | minimalists |
 
@@ -226,7 +228,7 @@ How incoming messages reach your agent. Pick one at first join via the prompt, o
 /agmsg mode            — show current mode
 ```
 
-Settings are per-project. Each `<project>/.claude/settings.local.json` gets exactly the hooks the chosen mode needs — repeated `set` calls are idempotent.
+Settings are per-project. Each project gets exactly the hooks the chosen mode needs in the agent's own hooks file (e.g. `<project>/.claude/settings.local.json` for Claude Code, `<project>/.devin/hooks.v1.json` for Devin CLI, `<project>/.codex/hooks.json` for Codex) — repeated `set` calls are idempotent.
 
 **Monitor priming**: in `monitor` mode, the receiving agent doesn't react to its first inbound message until it has taken at least one turn this session. If you've just started a fresh session and a teammate has already sent something, nudge the agent with any short message ("hi") to prime it — subsequent messages stream in real time.
 
@@ -291,6 +293,16 @@ Install with `./install.sh` (when `~/.config/opencode/` exists, the OpenCode-typ
 This makes OpenCode useful as a local coding agent, including configurations backed by local providers such as Ollama.
 
 See [docs/opencode.md](docs/opencode.md) for full setup instructions.
+
+### Devin CLI
+
+```
+/agmsg
+```
+
+Install with `./install.sh` (when `~/.config/devin/` exists, the Devin CLI-typed skill is placed automatically at `~/.config/devin/skills/agmsg/` alongside the default Codex-typed shared skill). Use `--agent-type devin` only for Devin CLI-only environments where Codex is not installed. Devin CLI is supported for manual and `turn`/`off` delivery workflows. It currently supports `mode turn` and `mode off`; `monitor`, `both`, and `spawn devin` are not supported, because Devin CLI does not have a real-time `Monitor` tool.
+
+See [docs/devin.md](docs/devin.md) for full setup instructions.
 
 ### Shell (any agent)
 
